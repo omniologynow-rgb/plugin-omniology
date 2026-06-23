@@ -1,4 +1,6 @@
-import { starterPlugin } from './plugin.ts';
+import { omniologyPlugin } from './plugin.js';
 
-export { starterPlugin, StarterService } from './plugin.ts';
-export default starterPlugin;
+export { omniologyPlugin } from './plugin.js';
+export { omniologyActions } from './actions.js';
+export { liveContestsProvider } from './provider.js';
+export default omniologyPlugin;
