@@ -6,7 +6,15 @@
     "sourceMap": true,
     "inlineSources": true,
     "declaration": true,
-    "noEmit": false
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    // The base tsconfig sets composite+incremental (for editor/project-ref use).
+    // For the publish build they make tsc do an up-to-date check against a
+    // .tsbuildinfo and SKIP emit on the 2nd run (the Checkpoint-G regression:
+    // worked once, then emitted nothing). Force a clean full declaration emit.
+    "composite": false,
+    "incremental": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "src/__tests__/**/*"]

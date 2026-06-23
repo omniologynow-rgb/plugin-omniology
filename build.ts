@@ -66,22 +66,32 @@ async function build() {
         return result;
       })(),
 
-      // Task 2: Generate TypeScript declarations
+      // Task 2: Generate TypeScript declarations.
+      // Invoke the REAL local compiler explicitly (node typescript/bin/tsc) —
+      // a bare `tsc` resolves to bun's bunx shim, which fetched a squatter "tsc"
+      // package that prints a message and exits 0, emitting nothing.
       (async () => {
         console.log('📝 Generating TypeScript declarations...');
         try {
-          await $`tsc --emitDeclarationOnly --project ./tsconfig.build.json`.quiet();
+          await $`node ./node_modules/typescript/bin/tsc --emitDeclarationOnly --project ./tsconfig.build.json`;
+          // Verify the entry declaration actually emitted (a 0-exit no-op must
+          // not pass for "success" — that was the silent Checkpoint-G failure).
+          if (!existsSync('dist/index.d.ts')) {
+            console.error('✗ tsc exited 0 but dist/index.d.ts was not emitted.');
+            return { success: false };
+          }
           console.log('✓ TypeScript declarations generated');
           return { success: true };
         } catch (error) {
-          console.warn('⚠ Failed to generate TypeScript declarations');
-          console.warn('  This is usually due to test files or type errors.');
+          console.error('✗ Failed to generate TypeScript declarations:', error instanceof Error ? error.message : error);
           return { success: false };
         }
       })(),
     ]);
 
-    if (!buildResult.success) {
+    // Fail hard if EITHER the JS bundle OR the declaration emit failed — a
+    // broken/missing dist/index.d.ts must never publish silently (Catch #25).
+    if (!buildResult.success || !tscResult.success) {
       return false;
     }
 
