@@ -24,3 +24,6 @@ keypair*.json
 # Test coverage
 coverage/
 .cache/
+
+# npm pack artifacts
+*.tgz

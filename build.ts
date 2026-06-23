@@ -36,7 +36,19 @@ async function build() {
           format: 'esm',
           sourcemap: true,
           minify: false,
-          external: ['dotenv', 'node:*', '@elizaos/core', '@elizaos/cli', 'zod'],
+          // Externalize all runtime deps — consumers install them (declared in
+          // package.json dependencies/peerDependencies). Keeps the published
+          // dist tiny instead of bundling @solana/web3.js's ~3MB tree.
+          external: [
+            'dotenv',
+            'node:*',
+            '@elizaos/core',
+            '@elizaos/cli',
+            'zod',
+            '@solana/web3.js',
+            'tweetnacl',
+            'bs58',
+          ],
           naming: {
             entry: '[dir]/[name].[ext]',
           },
@@ -58,7 +70,7 @@ async function build() {
       (async () => {
         console.log('📝 Generating TypeScript declarations...');
         try {
-          await $`tsc --emitDeclarationOnly --incremental --project ./tsconfig.build.json`.quiet();
+          await $`tsc --emitDeclarationOnly --project ./tsconfig.build.json`.quiet();
           console.log('✓ TypeScript declarations generated');
           return { success: true };
         } catch (error) {
