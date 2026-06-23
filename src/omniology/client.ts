@@ -51,6 +51,34 @@ export const listActiveContests = (cfg: OmniologyConfig, track?: string) =>
 export const checkPayout = (cfg: OmniologyConfig, entryId: string) =>
   request(cfg, 'GET', `/entries/${entryId}`);
 
+export const getContestRules = (cfg: OmniologyConfig, contestId: string) =>
+  request(cfg, 'GET', `/contests/${contestId}`);
+
+export const getLeaderboard = (
+  cfg: OmniologyConfig,
+  q: { window?: string; track?: string; sort?: string; limit?: number } = {},
+) => {
+  const params = new URLSearchParams();
+  if (q.window) params.set('window', q.window);
+  if (q.track) params.set('track', q.track);
+  if (q.sort) params.set('sort', q.sort);
+  if (q.limit) params.set('limit', String(q.limit));
+  const qs = params.toString();
+  return request(cfg, 'GET', `/leaderboard${qs ? `?${qs}` : ''}`);
+};
+
+export const getMyHistory = (
+  cfg: OmniologyConfig,
+  agentId: string,
+  q: { limit?: number; includePayloads?: boolean } = {},
+) => {
+  const params = new URLSearchParams();
+  if (q.limit) params.set('limit', String(q.limit));
+  if (q.includePayloads) params.set('include_payloads', 'true');
+  const qs = params.toString();
+  return request(cfg, 'GET', `/agents/${agentId}/history${qs ? `?${qs}` : ''}`);
+};
+
 // ── Register (wallet-signed message — NOT the key) ────────────────────────────
 
 export interface RegisterParams {

@@ -24,6 +24,9 @@ import {
   checkPayout,
   registerAgent,
   enterContest,
+  getContestRules,
+  getLeaderboard,
+  getMyHistory,
   OmniologyError,
 } from './omniology/client.js';
 
@@ -218,10 +221,102 @@ export const checkPayoutAction: Action = {
   ]],
 };
 
+// ── 6. GET_CONTEST_RULES ──────────────────────────────────────────────────────
+
+export const getContestRulesAction: Action = {
+  name: 'GET_CONTEST_RULES',
+  similes: ['CONTEST_RULES', 'CONTEST_DETAILS', 'RULES'],
+  description:
+    'Get a contest’s rules: entry fee, max entries, submission window, theme, track, ' +
+    'and the (weight-free) scoring dimensions. Pass contest_id.',
+  validate: async (): Promise<boolean> => true,
+  handler: async (runtime, _m, _s, options: Opts, cb?: HandlerCallback): Promise<ActionResult> => {
+    const cfg = getConfig(runtime);
+    const contestId = str(options, 'contest_id');
+    if (!contestId) return done(cb, 'GET_CONTEST_RULES', 'Need a `contest_id`.', false);
+    try {
+      const r: any = await getContestRules(cfg, contestId);
+      return done(cb, 'GET_CONTEST_RULES',
+        `${r.track} "${String(r.theme ?? '').slice(0, 50)}" — fee ${r.entry_fee_usdc ?? r.fee ?? '?'} USDC`,
+        true, r);
+    } catch (err) {
+      return done(cb, 'GET_CONTEST_RULES', `Could not fetch rules: ${errText(err)}`, false);
+    }
+  },
+  examples: [[
+    { name: 'user', content: { text: 'What are the rules for contest abc-123?' } },
+    { name: 'agent', content: { text: 'Fetching contest rules…', actions: ['GET_CONTEST_RULES'] } },
+  ]],
+};
+
+// ── 7. GET_LEADERBOARD ────────────────────────────────────────────────────────
+
+export const getLeaderboardAction: Action = {
+  name: 'GET_LEADERBOARD',
+  similes: ['LEADERBOARD', 'TOP_AGENTS', 'RANKINGS'],
+  description:
+    'Get the Omniology leaderboard. Optional: window (24h|7d|30d|all|season1, default 7d), ' +
+    'track (ART|STORY|JOKE|ALL), sort (net_usdc|win_rate|most_active|avg_score), limit.',
+  validate: async (): Promise<boolean> => true,
+  handler: async (runtime, _m, _s, options: Opts, cb?: HandlerCallback): Promise<ActionResult> => {
+    const cfg = getConfig(runtime);
+    try {
+      const r: any = await getLeaderboard(cfg, {
+        window: str(options, 'window'),
+        track: str(options, 'track'),
+        sort: str(options, 'sort'),
+        limit: typeof options?.['limit'] === 'number' ? (options['limit'] as number) : undefined,
+      });
+      const rows = r.leaderboard ?? r.entries ?? r ?? [];
+      const n = Array.isArray(rows) ? rows.length : 0;
+      return done(cb, 'GET_LEADERBOARD', `Leaderboard: ${n} agents.`, true, { leaderboard: rows });
+    } catch (err) {
+      return done(cb, 'GET_LEADERBOARD', `Could not fetch leaderboard: ${errText(err)}`, false);
+    }
+  },
+  examples: [[
+    { name: 'user', content: { text: 'Show me the top agents this week' } },
+    { name: 'agent', content: { text: 'Fetching the leaderboard…', actions: ['GET_LEADERBOARD'] } },
+  ]],
+};
+
+// ── 8. GET_MY_HISTORY ─────────────────────────────────────────────────────────
+
+export const getMyHistoryAction: Action = {
+  name: 'GET_MY_HISTORY',
+  similes: ['MY_HISTORY', 'MY_ENTRIES', 'PAST_ENTRIES'],
+  description:
+    'Get this agent’s past entries + outcomes (score, win, payout, judge_feedback inline). ' +
+    'Uses OMNIOLOGY_AGENT_ID. Optional: limit, include_payloads.',
+  validate: async (runtime: IAgentRuntime): Promise<boolean> => !!getConfig(runtime).agentId,
+  handler: async (runtime, _m, _s, options: Opts, cb?: HandlerCallback): Promise<ActionResult> => {
+    const cfg = getConfig(runtime);
+    if (!cfg.agentId) return done(cb, 'GET_MY_HISTORY', 'Set OMNIOLOGY_AGENT_ID first.', false);
+    try {
+      const r: any = await getMyHistory(cfg, cfg.agentId, {
+        limit: typeof options?.['limit'] === 'number' ? (options['limit'] as number) : undefined,
+        includePayloads: bool(options, 'include_payloads'),
+      });
+      const entries = r.entries ?? r ?? [];
+      const n = Array.isArray(entries) ? entries.length : 0;
+      return done(cb, 'GET_MY_HISTORY', `Your history: ${n} entries.`, true, { entries });
+    } catch (err) {
+      return done(cb, 'GET_MY_HISTORY', `Could not fetch history: ${errText(err)}`, false);
+    }
+  },
+  examples: [[
+    { name: 'user', content: { text: 'How have my past entries done?' } },
+    { name: 'agent', content: { text: 'Pulling your history…', actions: ['GET_MY_HISTORY'] } },
+  ]],
+};
+
 export const omniologyActions: Action[] = [
   registerAgentAction,
   checkReadinessAction,
   listActiveContestsAction,
   submitEntryAction,
   checkPayoutAction,
+  getContestRulesAction,
+  getLeaderboardAction,
+  getMyHistoryAction,
 ];

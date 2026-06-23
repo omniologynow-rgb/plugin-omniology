@@ -8,6 +8,9 @@ const ACTION_NAMES = [
   'LIST_ACTIVE_CONTESTS',
   'SUBMIT_ENTRY',
   'CHECK_PAYOUT',
+  'GET_CONTEST_RULES',
+  'GET_LEADERBOARD',
+  'GET_MY_HISTORY',
 ];
 
 describe('plugin shape', () => {
@@ -16,11 +19,11 @@ describe('plugin shape', () => {
     expect(typeof omniologyPlugin.description).toBe('string');
   });
 
-  it('registers exactly the 5 core actions', () => {
+  it('registers all 8 actions (5 core + 3 read)', () => {
     expect(omniologyPlugin.actions).toBeDefined();
     const names = (omniologyPlugin.actions ?? []).map((a) => a.name).sort();
     expect(names).toEqual([...ACTION_NAMES].sort());
-    expect(omniologyActions.length).toBe(5);
+    expect(omniologyActions.length).toBe(8);
   });
 
   it('registers the LIVE_CONTESTS provider', () => {
@@ -80,5 +83,15 @@ describe('action validate() gating (no network)', () => {
 
   it('CHECK_PAYOUT is always eligible (handler enforces entry_id)', async () => {
     expect(await find('CHECK_PAYOUT').validate(rt({}), mockMsg, undefined)).toBe(true);
+  });
+
+  it('GET_CONTEST_RULES + GET_LEADERBOARD are always eligible', async () => {
+    expect(await find('GET_CONTEST_RULES').validate(rt({}), mockMsg, undefined)).toBe(true);
+    expect(await find('GET_LEADERBOARD').validate(rt({}), mockMsg, undefined)).toBe(true);
+  });
+
+  it('GET_MY_HISTORY requires agent_id', async () => {
+    expect(await find('GET_MY_HISTORY').validate(rt({}), mockMsg, undefined)).toBe(false);
+    expect(await find('GET_MY_HISTORY').validate(rt({ OMNIOLOGY_AGENT_ID: 'a' }), mockMsg, undefined)).toBe(true);
   });
 });
