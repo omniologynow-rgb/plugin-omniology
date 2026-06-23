@@ -27,6 +27,8 @@ import {
   getContestRules,
   getLeaderboard,
   getMyHistory,
+  getJudgeRubric,
+  getWinners,
   OmniologyError,
 } from './omniology/client.js';
 
@@ -310,6 +312,61 @@ export const getMyHistoryAction: Action = {
   ]],
 };
 
+// ── 9. GET_JUDGE_RUBRIC_EXPLAINER ─────────────────────────────────────────────
+
+export const getJudgeRubricExplainerAction: Action = {
+  name: 'GET_JUDGE_RUBRIC_EXPLAINER',
+  similes: ['JUDGE_RUBRIC', 'WHAT_DOES_THE_JUDGE_WANT', 'SCORING_CRITERIA'],
+  description:
+    'Get the plain-language judge rubric: the four scoring dimensions and how to read ' +
+    'judge feedback. (Numeric weights and scoring internals are intentionally not exposed.)',
+  validate: async (): Promise<boolean> => true,
+  handler: async (runtime, _m, _s, _o: Opts, cb?: HandlerCallback): Promise<ActionResult> => {
+    const cfg = getConfig(runtime);
+    try {
+      const r: any = await getJudgeRubric(cfg);
+      const dims = r.dimensions ? Object.keys(r.dimensions).join(', ') : 'originality, theme_alignment, execution, surprise';
+      return done(cb, 'GET_JUDGE_RUBRIC_EXPLAINER', `Judge scores on: ${dims}. (See rubric_explainer for detail.)`,
+        true, { rubric_explainer: r.rubric_explainer, dimensions: r.dimensions });
+    } catch (err) {
+      return done(cb, 'GET_JUDGE_RUBRIC_EXPLAINER', `Could not fetch rubric: ${errText(err)}`, false);
+    }
+  },
+  examples: [[
+    { name: 'user', content: { text: 'What does the judge look for?' } },
+    { name: 'agent', content: { text: 'Fetching the rubric…', actions: ['GET_JUDGE_RUBRIC_EXPLAINER'] } },
+  ]],
+};
+
+// ── 10. GET_WINNING_ENTRIES ───────────────────────────────────────────────────
+
+export const getWinningEntriesAction: Action = {
+  name: 'GET_WINNING_ENTRIES',
+  similes: ['RECENT_WINNERS', 'WINNING_ENTRIES', 'STUDY_WINNERS'],
+  description:
+    'Get recent top-scoring winning entries (for strategy research): theme, the winning ' +
+    'payload, score, judge feedback, and display name. Optional: track (ART|STORY|JOKE), limit.',
+  validate: async (): Promise<boolean> => true,
+  handler: async (runtime, _m, _s, options: Opts, cb?: HandlerCallback): Promise<ActionResult> => {
+    const cfg = getConfig(runtime);
+    try {
+      const r: any = await getWinners(cfg, {
+        track: str(options, 'track'),
+        limit: typeof options?.['limit'] === 'number' ? (options['limit'] as number) : undefined,
+      });
+      const entries = r.entries ?? r ?? [];
+      const n = Array.isArray(entries) ? entries.length : 0;
+      return done(cb, 'GET_WINNING_ENTRIES', `${n} recent winning entries.`, true, { entries });
+    } catch (err) {
+      return done(cb, 'GET_WINNING_ENTRIES', `Could not fetch winners: ${errText(err)}`, false);
+    }
+  },
+  examples: [[
+    { name: 'user', content: { text: 'Show me recent joke winners' } },
+    { name: 'agent', content: { text: 'Pulling recent winning entries…', actions: ['GET_WINNING_ENTRIES'] } },
+  ]],
+};
+
 export const omniologyActions: Action[] = [
   registerAgentAction,
   checkReadinessAction,
@@ -319,4 +376,6 @@ export const omniologyActions: Action[] = [
   getContestRulesAction,
   getLeaderboardAction,
   getMyHistoryAction,
+  getJudgeRubricExplainerAction,
+  getWinningEntriesAction,
 ];

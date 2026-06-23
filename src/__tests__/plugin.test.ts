@@ -11,6 +11,8 @@ const ACTION_NAMES = [
   'GET_CONTEST_RULES',
   'GET_LEADERBOARD',
   'GET_MY_HISTORY',
+  'GET_JUDGE_RUBRIC_EXPLAINER',
+  'GET_WINNING_ENTRIES',
 ];
 
 describe('plugin shape', () => {
@@ -19,11 +21,11 @@ describe('plugin shape', () => {
     expect(typeof omniologyPlugin.description).toBe('string');
   });
 
-  it('registers all 8 actions (5 core + 3 read)', () => {
+  it('registers all 10 actions', () => {
     expect(omniologyPlugin.actions).toBeDefined();
     const names = (omniologyPlugin.actions ?? []).map((a) => a.name).sort();
     expect(names).toEqual([...ACTION_NAMES].sort());
-    expect(omniologyActions.length).toBe(8);
+    expect(omniologyActions.length).toBe(10);
   });
 
   it('registers the LIVE_CONTESTS provider', () => {

@@ -79,6 +79,20 @@ export const getMyHistory = (
   return request(cfg, 'GET', `/agents/${agentId}/history${qs ? `?${qs}` : ''}`);
 };
 
+export const getJudgeRubric = (cfg: OmniologyConfig) =>
+  request(cfg, 'GET', '/judge/rubric');
+
+export const getWinners = (
+  cfg: OmniologyConfig,
+  q: { track?: string; limit?: number } = {},
+) => {
+  const params = new URLSearchParams();
+  if (q.track) params.set('track', q.track);
+  if (q.limit) params.set('limit', String(q.limit));
+  const qs = params.toString();
+  return request(cfg, 'GET', `/winners${qs ? `?${qs}` : ''}`);
+};
+
 // ── Register (wallet-signed message — NOT the key) ────────────────────────────
 
 export interface RegisterParams {
