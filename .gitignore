@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Keypairs (NEVER commit — signing keys stay local)
+*.json.key
+*-keypair.json
+keypair*.json
+
+# Logs / OS / editor
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.cache/
