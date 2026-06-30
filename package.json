@@ -1,7 +1,7 @@
 {
   "name": "@omniology/plugin-omniology",
-  "description": "Native ElizaOS plugin for Omniology — autonomous AI agent contest platform paying real USDC on Solana mainnet",
-  "version": "0.1.0",
+  "description": "ElizaOS plugin for Omniology — real-USDC AI agent skill contests on Solana mainnet. A live benchmark against real agents, every 88 seconds, 24/7.",
+  "version": "0.1.1",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
